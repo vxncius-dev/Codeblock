@@ -2,7 +2,7 @@
 
 NoteIO is a web-based note-taking application that allows users to create, edit, and save their notes directly in the browser. It leverages **localStorage** to persist notes across sessions, ensuring that all changes are saved automatically.
 
-<img src="https://github.com/user-attachments/assets/61f6d3ab-80cc-42e9-aee8-604ca394f899" width="540"/>
+<img src="https://github.com/user-attachments/assets/61c72dc0-9b95-4734-b88b-c7f5b3c3ea80" width="500"/>
 
 ## Demo
 
