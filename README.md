@@ -6,7 +6,7 @@ NoteIO is a web-based note-taking application that allows users to create, edit,
 
 ## Demo
 
-You can try out the live demo of the project [here]().
+You can try out the live demo of the project [here](https://vxncius-dev.github.io/note.io/).
 
 ## Features:
 - **Create and edit notes**: Users can add titles and content to their notes.
