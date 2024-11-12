@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+  <title>note.io</title>
+  <script src="main.js" defer></script>
+</head>
+
+<body>
+  <nav>
+    <h1 class="blockSelection">Note.io</h1>
+    <div class="size">
+      <button type="button" onclick="noteManager.clearAll()">clear all</button>
+      <button type="button" class="bt" id="newCard" onclick="noteManager.dialog.showModal()">+</button>
+    </div>
+  </nav>
+  <ul id="container"></ul>
+  <dialog oncancel="noteManager.cancelDialog()">
+    <nav>
+      <h2>Create new note</h2>
+      <button type="button" onclick="noteManager.cancelDialog()">close</button>
+    </nav>
+    <div>
+      <input type="text" name="titleCard" id="titleNote" placeholder="Title" spellcheck="false">
+      <br>
+      <textarea name="noteContent" id="noteContent" cols="30" rows="10" placeholder="write something here..."
+        spellcheck="false" oninput="noteManager.managerSaveButtonStatus(this)"></textarea>
+      <br>
+      <span>
+        <button type="button" class="bt" id="saveNewNote" onclick="noteManager.addNote()" disabled>Save new
+          note</button>
+      </span>
+    </div>
+  </dialog>
+</body>
+
+</html>
