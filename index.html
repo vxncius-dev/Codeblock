@@ -4,38 +4,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="./app/icon.ico" type="image/x-icon">
+  <link href="https://fonts.cdnfonts.com/s/20813/FreeSerifBold.woff">
+  <link href="https://fonts.cdnfonts.com/css/poppins" rel="stylesheet">
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+  <link rel='stylesheet'
+    href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+  <link rel="shortcut icon" href="./app/favicon.png" type="image/x-icon">
   <link rel="stylesheet" href="./app/style.css">
   <title>NoteIO</title>
   <script src="./app/main.js" defer></script>
 </head>
 
 <body>
-  <nav>
-    <h1 class="blockSelection">NoteIO</h1>
-    <div class="size">
-      <button type="button" onclick="noteManager.clearAll()">clear all</button>
-      <button type="button" class="bt" id="newCard" onclick="noteManager.dialog.showModal()">+</button>
+  <div class="start-content">
+    <h1>NoteIO</h1>
+    <div class="button-group">
+      <a href="https://github.com/vxncius-dev" id="githubProfile" aria-label="Check Github"
+        data-title="Check my GitHub profile" class="button-style" target="_blank">
+        <img src="./app/github.png" alt="GitHub" width="20" height="20">
+      </a>
+
+      <button type="button" id="clearList" data-title="Clear all notes" class="button-style">
+        <i class="fi fi-br-broom"></i>
+      </button>
+
+      <button type="button" id="newNote" aria-label="Add Note" data-title="Create your first note"
+        class="button-style white-button">
+        <p>Write a note</p>
+        <i class="fi fi-br-pen-nib"></i>
+      </button>
     </div>
-  </nav>
+  </div>
+
   <ul id="container"></ul>
-  <dialog oncancel="noteManager.cancelDialog()">
-    <nav>
-      <h2>Create new note</h2>
-      <button type="button" onclick="noteManager.cancelDialog()">close</button>
-    </nav>
-    <div>
-      <input type="text" name="titleCard" id="titleNote" placeholder="Title" spellcheck="false">
-      <br>
-      <textarea name="noteContent" id="noteContent" cols="30" rows="10" placeholder="write something here..."
-        spellcheck="false" oninput="noteManager.managerSaveButtonStatus(this)"></textarea>
-      <br>
-      <span>
-        <button type="button" class="bt" id="saveNewNote" onclick="noteManager.addNote()" disabled>Save new
-          note</button>
-      </span>
-    </div>
-  </dialog>
+
+  <div class="new-note" id="noteEditor" style="display: none;" data-id="first-note">
+      <input type="text" name="title-note" id="titleNote" placeholder="Title">
+
+      <div class="text-area" id="editor" spellcheck="false" contenteditable></div>
+
+      <div class="bottom-navbar">
+        <select id="font-selector">
+          <option value="Arial" selected>Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="Impact">Impact</option>
+          <option value="Comic Sans MS">Comic Sans MS</option>
+          <option value="Lucida Sans">Lucida Sans</option>
+          <option value="Palatino">Palatino</option>
+        </select>
+
+        <label for="changeColor" id="colorDot" data-title="Change color"></label>
+        <input type="color" name="color-select" id="changeColor" hidden value="#ffffff">
+
+        <button type="button" id="bold-btn" aria-label="Bold text" data-title="Bold">
+          <i class="fi fi-rr-bold"></i>
+        </button>
+
+        <button type="button" id="italic-btn" aria-label="Italic text" data-title="Italic">
+          <i class="fi fi-br-italic"></i>
+        </button>
+
+        <button type="button" id="underline-btn" aria-label="Underline text" data-title="Underline">
+          <i class="fi fi-br-underline"></i>
+        </button>
+
+        <button type="button" id="strike-btn" aria-label="Strikethrough text" data-title="Strikethrough">
+          <i class="fi fi-br-strikethrough"></i>
+        </button>
+
+        <span class="space"></span>
+
+        <button type="button" id="saveNote" aria-label="Save Note" data-title="Save note"
+          class="button-style white-button">
+          <p>Save note</p>
+        </button>
+      </div>
+  </div>
+
+  <small id="reference"><a href="https://github.com/vxncius-dev" aria-label="Github link" target="_blank">created by
+      vxncius</a></small>
 </body>
 
 </html>
