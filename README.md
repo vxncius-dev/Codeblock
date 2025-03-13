@@ -46,7 +46,3 @@ You can try out the live demo of the project [here](https://vxncius-dev.github.i
 
 2. **Run the project**:
    - Open `index.html` in your preferred browser to see the app in action.
-
-## License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
