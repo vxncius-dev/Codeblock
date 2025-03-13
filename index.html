@@ -3,54 +3,107 @@
 
 <head>
   <meta charset="UTF-8">
-  <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
-  <link href="https://fonts.cdnfonts.com/css/pt-serif" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./app/style.css">
+  <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
   <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-brands/css/uicons-brands.css'>
   <link rel='stylesheet'
     href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
   <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+  <link rel='stylesheet'
+    href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-straight/css/uicons-regular-straight.css'>
   <link rel="shortcut icon" href="./app/favicon.png" type="image/x-icon">
-  <link rel="stylesheet" href="./app/style.css">
-  <title>NoteIO</title>
+  <title>Codeblock</title>
   <script src="./app/main.js" defer></script>
 </head>
 
 <body>
   <div id="container" class="column-content">
     <nav>
-      <h1>NoteIO</h1>
+      <h1>Codeblock</h1>
       <div class="button-group">
-        <button type="button" id="clearAll" style="display: none;" class="button-style outline">
-          <p>clear all</p>
-          <i class="fi fi-rr-broom"></i>
-        </button>
-        <button type="button" id="newCard" class="button-style">
-          <i class="fi fi-rr-pen-nib"></i>
+        <input type="checkbox" name="options-list" id="menu-options" hidden>
+
+        <label for="menu-options" class="button-style outline menu" data-title="Menu"
+          aria-label="Open menu options">
+          <img src="./app/icons/menu-burger.png" alt="icon" width="20" class="icon">
+        </label>
+
+        <ul class="menu-list" aria-label="Menu of options">
+          <li>
+            <button type="button" id="changeTheme" class="button-style outline" data-title="Change Theme"
+              aria-label="Toggle dark/light theme">
+              <p>Toggle Theme</p>
+              <img src="./app/icons/moon-stars.png" alt="Theme icon" width="20" class="icon">
+            </button>
+          </li>
+          <li>
+            <button type="button" id="clearAll" class="button-style outline" data-title="Clear All Notes"
+              aria-label="Clear all notes" disabled>
+              <p>Clear All</p>
+              <img src="./app/icons/broom.png" alt="Broom icon" width="20" class="icon">
+            </button>
+          </li>
+          <li>
+            <button type="button" id="importData" class="button-style outline" data-title="Import Data"
+              aria-label="Import data from a file">
+              <p>Import Data</p>
+              <img src="./app/icons/file-import.png" alt="Import file icon" width="20" class="icon">
+            </button>
+          </li>
+          <li>
+            <button type="button" id="exportData" class="button-style outline" data-title="Export Data"
+              aria-label="Export your data">
+              <p>Export Data</p>
+              <img src="./app/icons/file-export.png" alt="Export file icon" width="20" class="icon">
+            </button>
+          </li>
+          <li>
+            <button type="button" id="donate" class="button-style outline" data-title="Donate"
+              aria-label="Support the project with a donation">
+              <p>Donate</p>
+              <img src="./app/icons/hands-heart.png" alt="Donate icon" width="20" class="icon">
+            </button>
+          </li>
+          <li>
+            <a href="https://github.com/vxncius-dev" target="_blank" class="button-style outline" data-title="GitHub"
+              aria-label="Visit the project on GitHub">
+              <p>GitHub</p>
+              <img src="./app/icons/github.png" alt="GitHub icon" width="20" class="icon">
+            </a>
+          </li>
+        </ul>
+
+        <button type="button" id="newCard" class="button-style" data-title="New Note" aria-label="Create new note">
+          <img src="./app/icons/pen-nib.png" alt="icon" width="20" class="icon invert">
         </button>
       </div>
     </nav>
-    <ul id="listView"></ul>
+    <ul id="listView" aria-label="List of notes"></ul>
   </div>
   <div id="dialog" class="column-content" style="display: none;">
-    <div>
-      <input type="text" name="titleCard" id="titleNote" placeholder="Title" spellcheck="false" hidden>
-      <br>
-      <textarea name="noteContent" id="noteContent" cols="30" rows="10" placeholder="write something here..."
-        spellcheck="false"></textarea>
-      <br>
+    <div class="container-new-note">
+      <div class="content-note">
+        <input type="text" name="titleCard" id="titleNote" placeholder="Title" spellcheck="false" class="outline"
+          aria-label="Note title">
+        <textarea name="noteContent" id="noteContent" cols="30" rows="10" placeholder="Write something here..."
+          spellcheck="false" class="outline" aria-label="Note content"></textarea>
+      </div>
       <div class="button-group">
-        <button type="button" id="saveNewNote" class="button-style" disabled>
-          <p>save note</p>
-          <i class="fi fi-rr-disk"></i>
+        <button type="button" id="saveNewNote" class="button-style" disabled data-title="Save Note"
+          aria-label="Save note">
+          <p>Save Note</p>
+          <img src="./app/icons/disk.png" alt="icon" width="20" class="icon invert">
         </button>
-        <button type="button" id="closeDialog" class="button-style">
-          <p>close</p>
-          <i class="fi fi-br-cross-small"></i>
+        <button type="button" id="closeDialog" class="button-style" data-title="Close Editor"
+          aria-label="Close note editor">
+          <p>Close</p>
+          <img src="./app/icons/cross-small.png" alt="icon" width="20" class="icon invert">
         </button>
       </div>
     </div>
-    </dialog>
+  </div>
+  <div id="modal" style="display: none;"></div>
 </body>
 
 </html>
