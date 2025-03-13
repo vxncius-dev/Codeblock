@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'SF Pro';
+  src: url('/app/fonts/SF-Pro.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
   --button-bg: #121212;
   --invert-op: #ffffff3a;
@@ -40,7 +47,7 @@
   outline: none;
   text-decoration: none;
   list-style: none;
-  font-family: 'SF Pro Display', sans-serif;
+  font-family: 'SF Pro', sans-serif;
   cursor: url('./cursor/cursor.svg'), auto;
   -webkit-user-select: none;
   -ms-user-select: none;
@@ -54,7 +61,7 @@
   --button-child: #eee;
   --icon-theme: invert(1);
   --icon-theme-outline: invert(0);
-
+  --logo: invert(1);
   background-color: #eee;
   color: #000;
 }
@@ -73,7 +80,7 @@ body {
   button *,
   a *,
   .menu,
-  .menu * {
+  .menu *, .upload-button, .upload-button *{
     cursor: url('./cursor/cursor_pointer.svg'), auto;
   }
 
@@ -108,6 +115,19 @@ body {
 
     [data-title] {
       position: relative;
+    }
+  }
+
+  #logo{
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    gap: 5px;
+
+    img{
+      min-width: 20px;
+      min-height: 20px;
+      filter: var(--logo);
     }
   }
 
@@ -159,6 +179,10 @@ body {
             font-size: .9em;
             position: relative;
             font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 98%;
           }
 
           textarea:not(:focus) {
@@ -318,7 +342,18 @@ body {
     display: none;
     justify-content: center;
     align-items: center;
-    padding-bottom: 200px;
+    padding-bottom: 100px;
+
+    #message{
+      position: absolute;
+      margin-inline: auto;
+      transition: .6s ease;
+      bottom: -100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--invert-op);
+      box-shadow: rgba(0, 0, 0, 0.2) 0px 20px 30px;
+    }
 
     #modalContent {
       background: var(--invert);
@@ -336,6 +371,10 @@ body {
       button {
         background: var(--invert);
       }
+      
+      small{
+        margin-bottom: 10px;
+      }
 
       nav {
         display: flex;
@@ -351,7 +390,18 @@ body {
           display: flex;
           flex-direction: column;
           gap: 4px;
+
+          small{
+            margin: 0;
+          }
         }
+      }
+
+      .upload-area{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
       }
 
       .end {
@@ -402,8 +452,10 @@ body {
             background: none;
             justify-content: space-between;
 
-            p{
-              width: 60%;
+            p,a{
+              color: var(--button-bg);
+              max-width: 90%;
+              overflow: hidden;
               text-overflow: ellipsis;
             }
           }

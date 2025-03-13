@@ -23,14 +23,42 @@ class NoteIO {
     this.addEventListeners();
   }
 
-  toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    localStorage.setItem('Codeblock-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-  }
-
   applySavedTheme() {
     const savedTheme = localStorage.getItem('Codeblock-theme');
     document.body.classList.toggle('light-mode', savedTheme === 'light');
+  }
+
+  loadCards() {
+    this.buttonReset()
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    this.listView.innerHTML = "";
+    const sortedNotes = Object.entries(noteList).sort(
+      (a, b) => b[1].timestamp - a[1].timestamp
+    );
+
+    sortedNotes.forEach(([id, noteItem]) => {
+      const noteTitle = noteItem.title
+        ? `<p contentEditable spellcheck="false">${noteItem.title}</p>`
+        : "";
+
+      this.listView.innerHTML += `
+      <li id="${id}">
+          <div class="note-scope">
+              ${noteTitle}
+              <textarea id="content-${id}"
+                spellcheck="false">${noteItem.content}</textarea>
+          </div>
+          <button type="button" id="copy-${id}" class="button-style outline"
+            data-title="Copy this note" aria-label="Copy this note">
+            <img src="./app/icons/clone.png" alt="icon" width="20" class="icon">
+          </button>
+      </li>`;
+    });
+
+    this.copyButtonListener();
+    this.textareaListeners();
+    this.menuListenerFunction();
+    this.insertPlaceholderIfNoNotes();
   }
 
   insertPlaceholderIfNoNotes() {
@@ -84,45 +112,6 @@ class NoteIO {
     }
   }
 
-  buttonReset() {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    this.clearAll.disabled = Object.entries(noteList).length < 1;
-    this.exportData.disabled = Object.entries(noteList).length < 1;
-  }
-
-  loadCards() {
-    this.buttonReset()
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    this.listView.innerHTML = "";
-    const sortedNotes = Object.entries(noteList).sort(
-      (a, b) => b[1].timestamp - a[1].timestamp
-    );
-
-    sortedNotes.forEach(([id, noteItem]) => {
-      const noteTitle = noteItem.title
-        ? `<p contentEditable spellcheck="false">${noteItem.title}</p>`
-        : "";
-
-      this.listView.innerHTML += `
-      <li id="${id}">
-          <div class="note-scope">
-              ${noteTitle}
-              <textarea id="content-${id}"
-                spellcheck="false">${noteItem.content}</textarea>
-          </div>
-          <button type="button" id="copy-${id}" class="button-style outline"
-            data-title="Copy this note" aria-label="Copy this note">
-            <img src="./app/icons/clone.png" alt="icon" width="20" class="icon">
-          </button>
-      </li>`;
-    });
-
-    this.copyButtonListener();
-    this.textareaListeners();
-    this.menuListenerFunction();
-    this.insertPlaceholderIfNoNotes();
-  }
-
   addEventListeners() {
     let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
     this.saveNewNote.addEventListener("click", () => this.addNote());
@@ -168,6 +157,7 @@ class NoteIO {
             el.style.display = "none";
             document.getElementById("container").style.display = "flex";
             if (document.getElementById('modalContent')) document.getElementById('modalContent').remove();
+            cancelDialog()
           }
         });
       }
@@ -177,8 +167,8 @@ class NoteIO {
     this.closeDialog.addEventListener("click", () => this.dialogControl(false));
     this.changeTheme.addEventListener("click", () => this.toggleTheme());
     this.clearAll.addEventListener("click", () => this.clearAllNotes());
-    // importData
-    this.exportData.addEventListener("click", () => this.downloadNotes());
+    this.importData.addEventListener("click", () => this.importDataModal());
+    this.exportData.addEventListener("click", () => this.exportDataModal());
     this.donate.addEventListener("click", () => this.donateModal());
 
     document.addEventListener('paste', (event) => {
@@ -196,194 +186,9 @@ class NoteIO {
     });
   }
 
-  downloadNotes() {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    const jsonContent = JSON.stringify(noteList, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Codeblock-notes.json";
-    link.click();
-  }
-
-  dialogControl(show) {
-    this.dialog.style.display = show ? "flex" : "none";
-    this.container.style.display = show ? "none" : "flex";
-  }
-
-  saveNotes() {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-    this.buttonReset()
-  }
-
-  managerSaveButtonStatus(el) {
-    this.saveNewNote.disabled = el.value.length > 0 ? false : true;
-  }
-
-  copyButtonListener() {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    document.querySelectorAll("#listView li button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.id.replace("copy-", ""),
-          contentNote = noteList[id].content;
-        try {
-          navigator.clipboard
-            .writeText(contentNote)
-            .then(() => {
-              alert("Texto copiado para a área de transferência!");
-            })
-            .catch((error) => {
-              alert(`Falha ao copiar texto para a área de transferência: ${error}`);
-            });
-        } catch (e) {
-          console.log(e);
-        }
-      });
-    });
-  }
-
-  textareaListeners() {
-    document.querySelectorAll("li textarea").forEach((textArea) => {
-      const adjustHeight = () => {
-        textArea.style.height = "auto";
-        const newHeight = textArea.scrollHeight;
-        textArea.style.height = newHeight > 350 ? "350px" : `${newHeight}px`;
-      };
-      textArea.addEventListener("focus", () => adjustHeight());
-      textArea.addEventListener("input", () => adjustHeight());
-      textArea.addEventListener("blur", () => (textArea.style.height = "32px"));
-      textArea.style.maxHeight = "350px";
-    });
-  }
-
-  menuListenerFunction() {
-    document.querySelectorAll("li").forEach((liElement) => {
-      liElement.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        const existingMenu = document.querySelector("#menu");
-        if (existingMenu) existingMenu.remove();
-
-        const menu = document.createElement("div");
-        menu.id = "menu";
-
-        menu.innerHTML = `
-          <button type="button" id="Delete" class="button-style outline"
-            data-title="Delete this note" aria-label="Delete note">
-            <p>Delete Note</p>
-            <img src="./app/icons/trash.png" alt="icon" width="20" class="icon invert">
-          </button>
-          <button type="button" id="Share" class="button-style outline"
-            data-title="Share this note" aria-label="Share note">
-            <p>Share Note</p>
-            <img src="./app/icons/share.png" alt="icon" width="20" class="icon invert">
-          </button>
-        `;
-
-        liElement.appendChild(menu);
-        const menuWidth = menu.offsetWidth;
-        const menuHeight = menu.offsetHeight;
-        let menuX = e.pageX;
-        let menuY = e.pageY;
-
-        if (menuX + menuWidth > window.innerWidth) menuX = e.pageX - menuWidth;
-        if (menuY + menuHeight > window.innerHeight) menuY = e.pageY - menuHeight;
-        if (e.pageX > window.innerWidth * 0.8) menuX = e.pageX - menuWidth;
-
-        menu.style.cssText = `
-          left: ${menuX}px;
-          top: ${menuY}px;
-          position: absolute;
-          display: flex;
-          flex-direction: column;
-          width: 120px;
-        `;
-
-        document.addEventListener("click", (closeMenuEvent) => {
-          if (
-            !menu.contains(closeMenuEvent.target) &&
-            !liElement.contains(closeMenuEvent.target)
-          ) {
-            menu.remove();
-          }
-        });
-
-        menu.querySelector("#Delete").addEventListener("click", () => {
-          const id = liElement.id;
-          this.deleteNote(id);
-          menu.remove();
-        });
-
-        menu.querySelector("#Share").addEventListener("click", () => {
-          const id = liElement.id;
-          this.createShareDialog(id);
-          menu.remove();
-        });
-      });
-    });
-  }
-
-  deleteNote(id) {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    if (noteList[id]) {
-      delete noteList[id];
-      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-    }
-    this.loadCards()
-    this.buttonReset()
-  }
-
-  createShareDialog(id) {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    let modal = document.getElementById("modal");
-    modal.style.display = "flex";
-    modal.innerHTML += `
-        <div id="modalContent">
-          <nav>
-            <h2>Share note</h2>
-            <button type="button" class="button-style outline"
-              onclick="document.getElementById('modalContent').remove();
-                document.getElementById('modal').style.display='none';"
-              data-title="Close sharing menu" aria-label="Close share dialog">
-                <img src="./app/icons/cross-small.png" alt="icon" width="20" class="icon">
-              </button>
-          </nav>
-          <div class="share-content">
-            <p id="text-outline" class="button-style outline">
-              ${noteList[id].content}
-            </p>
-            
-            <div class="button-group">
-              <button type="button" class="button-style outline"
-                onclick="window.open('https://wa.me/?text=${encodeURIComponent((noteList[id].title ? `*${noteList[id].title}*\n\n` : '') + noteList[id].content)}', '_blank')"
-                data-title="Share via WhatsApp" aria-label="Share note on WhatsApp">
-                <img src="./app/icons/whatsapp.png" alt="icon" width="20" class="icon">
-              </button>
-          
-              <button type="button" class="button-style outline"
-                onclick="window.location.href = 'mailto:?subject=${encodeURIComponent(noteList[id].title ? `<strong>${noteList[id].title}</strong>\n\n` : '')}&body=${encodeURIComponent(noteList[id].content)}'"
-                data-title="Share via Email" aria-label="Send note via email">
-                <img src="./app/icons/envelope.png" alt="icon" width="20" class="icon">
-              </button>
-            </div>
-          </div>
-        </div>`;
-    this.closeModalOnClickOutside();
-  }
-
-  closeModal() {
-    let modal = document.getElementById("modal")
-    if (document.getElementById('modalContent')) document.getElementById('modalContent').remove();
-    modal.style.display = "none";
-  }
-
-  closeModalOnClickOutside() {
-    let modal = document.getElementById("modal")
-    modal.addEventListener("click", (event) => {
-      if (!event.target.closest('#modalContent')) {
-        this.closeModal();
-      }
-    });
+  toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('Codeblock-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
   }
 
   clearAllNotes() {
@@ -424,6 +229,239 @@ class NoteIO {
     });
   }
 
+  buttonReset() {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    this.clearAll.disabled = Object.entries(noteList).length < 1;
+    this.exportData.disabled = Object.entries(noteList).length < 1;
+  }
+
+  importDataModal() {
+    modal.style.display = "flex";
+    modal.innerHTML += `
+        <div id="modalContent">
+          <nav>
+          <h2>Upload file</h2>
+          </nav>
+          <div class="upload-area">
+            <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" hidden>
+            <label for="upload-notes" class="button-style upload-button">
+              <p>Upload File</p>
+              <img src="./app/icons/file-upload.png" alt="icon" width="20" class="icon">
+            </label>
+            <small>Accepted JSON and CSV files</small>
+          </div>
+          <div class="button-group end">
+            <button type="button" class="button-style outline" id="cancelButton"
+              data-title="Close Modal" aria-label="Close the modal">
+              <p>Close</p>
+            </button>
+          </div>
+        </div>`;
+
+    this.closeModalOnClickOutside();
+    document.getElementById("cancelButton").addEventListener("click", this.closeModal);
+
+    document.getElementById("upload-notes").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (!file) {
+        console.log("Nenhum arquivo selecionado.");
+        return;
+      }
+      console.log("Nome do arquivo:", file.name);
+      console.log("Tipo do arquivo:", file.type || "Desconhecido");
+      console.log("Tamanho (bytes):", file.size);
+      console.log("Data de criação/modificação:", new Date(file.lastModified));
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const content = e.target.result;
+        if (file.name.endsWith(".json")) {
+          processJson(content);
+        } else if (file.name.endsWith(".csv")) {
+          processCsv(content);
+        } else {
+          console.error("Formato não suportado.");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function processJson(content) {
+      try {
+        const data = JSON.parse(content);
+        if (!isValidJsonFormat(data)) {
+          console.error("O JSON não está no formato esperado:", data);
+          return;
+        }
+        console.log("JSON válido:", data);
+        saveToLocalStorage(data);
+      } catch (error) {
+        console.error("Erro ao analisar o JSON:", error.message);
+      }
+    }
+
+    function processCsv(content) {
+      const lines = content.split("\n").map(line => line.trim()).filter(line => line);
+      if (lines.length < 2) {
+        console.error("CSV inválido: Não há dados suficientes.");
+        return;
+      }
+      const headers = lines[0].split(",");
+      if (!headers.includes("id") || !headers.includes("title") || !headers.includes("content") || !headers.includes("timestamp")) {
+        console.error("CSV não tem as colunas esperadas:", headers);
+        return;
+      }
+      const data = {};
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(",");
+        if (values.length !== headers.length) {
+          console.warn("Linha ignorada (número de colunas inconsistente):", lines[i]);
+          continue;
+        }
+        const entry = {
+          title: values[headers.indexOf("title")],
+          content: values[headers.indexOf("content")],
+          timestamp: Number(values[headers.indexOf("timestamp")])
+        };
+        if (isNaN(entry.timestamp)) {
+          console.warn("Linha ignorada (timestamp inválido):", lines[i]);
+          continue;
+        }
+        data[values[headers.indexOf("id")]] = entry;
+      }
+
+      if (!isValidJsonFormat(data)) {
+        console.error("O CSV convertido não está no formato esperado:", data);
+        return;
+      }
+      console.log("CSV convertido para JSON:", data);
+      saveToLocalStorage(data);
+    }
+
+    function saveToLocalStorage(newData) {
+      let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+      for (const [noteId, note] of Object.entries(newData)) {
+        const newNote = {
+          title: note.title || "",
+          content: note.content,
+          timestamp: note.timestamp || Date.now()
+        };
+        noteList[noteId] = newNote;
+      }
+      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+      console.log("Notas salvas no localStorage:", noteList);
+      // close modal end update list () => this.loadCards();
+    }
+
+    function isValidJsonFormat(data) {
+      if (typeof data !== "object" || data === null) return false;
+      return Object.values(data).every(entry =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof entry.content === "string" &&
+        typeof entry.timestamp === "number"
+      );
+    }
+  }
+
+  exportDataModal() {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    const jsonContent = JSON.stringify(noteList, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Codeblock-notes.json";
+    link.click();
+  }
+
+  donateModal() {
+    let modal = document.getElementById("modal");
+    modal.style.display = "flex";
+    modal.innerHTML += `
+        <div id="modalContent">
+          <nav>
+            <span>
+              <h2>Make a Donation</h2>
+              <small>Thank you for your support! Your contribution makes a difference in keeping the project active.</small>
+            </span>
+          </nav>
+          <div class="donation-methods">
+            <div class="method">
+              <p>Make your donation via Pix using the key below:</p>
+              <span class="copyText button-style outline">
+                <p id="pixKey">774aa4ae-69ec-4f2f-a774-0acb2074880f</p>
+                <button type="button" class="button-style outline" id="copyKeyBtn"
+                  data-title="Copy this key" aria-label="Copy this key">
+                  <img src="./app/icons/clone.png" alt="icon" width="20" class="icon" id="copy-pix">
+                </button>
+              </span>
+            </div>
+            <div class="method">
+              <p>If you prefer to donate via Bitcoin, use the address below or the QR Code:</p>
+              <span class="copyText button-style outline">
+                <a href="bitcoin:BC1Q6ZVD3EL7G00L0Q2UMY49DG93KQW8UL24R86KH6" id="bitcoinKey">
+                    BC1Q6ZVD3EL7G00L0Q2UMY49DG93KQW8UL24R86KH6
+                </a>
+                <button type="button" class="button-style outline" id="copyAddressBtn"
+                    data-title="Copy this address" aria-label="Copy this address">
+                  <img src="./app/icons/clone.png" alt="icon" width="20" class="icon" id="copy-address">
+                </button>
+              </span>
+            </div>
+          </div>
+          <small><em>Any amount is welcome! Thank you so much for your support.</em></small>
+          
+          <div class="button-group end">
+            <button type="button" class="button-style outline" id="cancelButton"
+              data-title="Close Modal" aria-label="Close the modal">
+              <p>Close</p>
+            </button>
+          </div>
+
+          <p id="message" class="button-style outline">Copied to clipboard</p>
+        </div>`;
+
+    this.closeModalOnClickOutside();
+    document.getElementById("cancelButton").addEventListener("click", this.closeModal);
+
+    const resetCopyButton = (id) => setTimeout(() => {
+      if (document.getElementById(id)) document.getElementById(id).src = "./app/icons/clone.png"
+    }, 5000)
+    const hiddenMessage = () => setTimeout(() => {
+      let msg = document.getElementById("message");
+      if (msg) {
+        msg.style.transition = ".6s ease";
+        msg.style.bottom = "-100%";
+      }
+    }, 2000)
+    document.getElementById("copyKeyBtn").addEventListener("click", () => {
+      const pixKey = document.getElementById("pixKey").textContent;
+      navigator.clipboard.writeText(pixKey).then(() => {
+        document.getElementById("copy-pix").src = "./app/icons/check.png";
+        document.getElementById("message").style.bottom = "150px";
+        resetCopyButton("copy-pix");
+        hiddenMessage();
+      }).catch(err => console.error("Failed to copy: ", err));
+    });
+    document.getElementById("copyAddressBtn").addEventListener("click", () => {
+      const bitcoinKey = document.getElementById("bitcoinKey").textContent;
+      navigator.clipboard.writeText(bitcoinKey).then(() => {
+        document.getElementById("copy-address").src = "./app/icons/check.png";
+        document.getElementById("message").style.bottom = "150px";
+        resetCopyButton("copy-address");
+        hiddenMessage();
+      }).catch(err => console.error("Failed to copy: ", err));
+    });
+  }
+
+  dialogControl(show) {
+    this.dialog.style.display = show ? "flex" : "none";
+    this.container.style.display = show ? "none" : "flex";
+  }
+
+  managerSaveButtonStatus(el) {
+    this.saveNewNote.disabled = el.value.length > 0 ? false : true;
+  }
+
   generateUUID() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
       let r = (Math.random() * 16) | 0,
@@ -448,80 +486,175 @@ class NoteIO {
     this.loadCards();
   }
 
-  cancelDialog() {
-    this.titleNote.value = "";
-    this.noteContent.value = "";
-    this.dialogControl(false);
+  saveNotes() {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+    this.buttonReset()
   }
 
-  donateModal() {
+  copyButtonListener() {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    document.querySelectorAll("#listView li button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.id.replace("copy-", ""),
+          contentNote = noteList[id].content;
+        try {
+          navigator.clipboard
+            .writeText(contentNote)
+            .then(() => {
+              alert("Texto copiado para a área de transferência!");
+            })
+            .catch((error) => {
+              alert(`Falha ao copiar texto para a área de transferência: ${error}`);
+            });
+        } catch (e) {
+          console.log(e);
+        }
+      });
+    });
+  }
+
+  menuListenerFunction() {
+    document.querySelectorAll("li").forEach((liElement) => {
+      liElement.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        const existingMenu = document.querySelector("#menu");
+        if (existingMenu) existingMenu.remove();
+        const menu = document.createElement("div");
+        menu.id = "menu";
+        menu.innerHTML = `
+          <button type="button" id="Delete" class="button-style outline"
+            data-title="Delete this note" aria-label="Delete note">
+            <p>Delete Note</p>
+            <img src="./app/icons/trash.png" alt="icon" width="20" class="icon invert">
+          </button>
+          <button type="button" id="Share" class="button-style outline"
+            data-title="Share this note" aria-label="Share note">
+            <p>Share Note</p>
+            <img src="./app/icons/share.png" alt="icon" width="20" class="icon invert">
+          </button>
+        `;
+
+        liElement.appendChild(menu);
+        const menuWidth = menu.offsetWidth;
+        const menuHeight = menu.offsetHeight;
+        let menuX = e.pageX;
+        let menuY = e.pageY;
+        if (menuX + menuWidth > window.innerWidth) menuX = e.pageX - menuWidth;
+        if (menuY + menuHeight > window.innerHeight) menuY = e.pageY - menuHeight;
+        if (e.pageX > window.innerWidth * 0.8) menuX = e.pageX - menuWidth;
+
+        menu.style.cssText = `
+          left: ${menuX}px;
+          top: ${menuY}px;
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          width: 120px;
+        `;
+
+        document.addEventListener("click", (closeMenuEvent) => {
+          if (
+            !menu.contains(closeMenuEvent.target) &&
+            !liElement.contains(closeMenuEvent.target)
+          ) {
+            menu.remove();
+          }
+        });
+
+        menu.querySelector("#Delete").addEventListener("click", () => {
+          const id = liElement.id;
+          this.deleteNote(id);
+          menu.remove();
+        });
+        menu.querySelector("#Share").addEventListener("click", () => {
+          const id = liElement.id;
+          this.createShareDialog(id);
+          menu.remove();
+        });
+      });
+    });
+  }
+
+  textareaListeners() {
+    document.querySelectorAll("li textarea").forEach((textArea) => {
+      const adjustHeight = () => {
+        textArea.style.height = "auto";
+        const newHeight = textArea.scrollHeight;
+        textArea.style.height = newHeight > 350 ? "350px" : `${newHeight}px`;
+      };
+      textArea.addEventListener("focus", () => adjustHeight());
+      textArea.addEventListener("input", () => adjustHeight());
+      textArea.addEventListener("blur", () => (textArea.style.height = "32px"));
+      textArea.style.maxHeight = "350px";
+    });
+  }
+
+  deleteNote(id) {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    if (noteList[id]) {
+      delete noteList[id];
+      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+    }
+    this.loadCards()
+    this.buttonReset()
+  }
+
+  createShareDialog(id) {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
     let modal = document.getElementById("modal");
     modal.style.display = "flex";
     modal.innerHTML += `
         <div id="modalContent">
           <nav>
-            <span>
-              <h2>Make a Donation</h2>
-              <small>Thank you for your support! Your contribution makes a difference in keeping the project active.</small>
-            </span>
-          </nav>
-          <div class="donation-methods">
-            <div class="method">
-              <p>Make your donation via Pix using the key below:</p>
-              <span class="copyText button-style outline">
-                <p id="pixKey">774aa4ae-69ec-4f2f-a774-0acb2074880f</p>
-                <button type="button" class="button-style outline"
-                  data-title="Copy this key" aria-label="Copy this key">
-                  <img src="./app/icons/clone.png" alt="icon" width="20" class="icon" id="copy-pix">
-                </button>
-              </span>
-            </div>
-            <div class="method">
-              <p>If you prefer to donate via Bitcoin, use the address below or the QR Code:</p>
-              <span class="copyText button-style outline">
-                <p id="bitcoinKey">1A2b3C4D5E6F7G8H9I0J</p>
-                <button type="button" class="button-style outline"
-                    data-title="Copy this address" aria-label="Copy this address">
-                  <img src="./app/icons/clone.png" alt="icon" width="20" class="icon" id="copy-address">
-                </button>
-              </span>
-            </div>
-          </div>
-          <small><em>Any amount is welcome! Thank you so much for your support.</em></small>
-          <div class="button-group end">
+            <h2>Share note</h2>
             <button type="button" class="button-style outline"
-              data-title="Close Modal" aria-label="Close the modal">
-              <p>Close</p>
-            </button>
+              onclick="document.getElementById('modalContent').remove();
+                document.getElementById('modal').style.display='none';"
+              data-title="Close sharing menu" aria-label="Close share dialog">
+                <img src="./app/icons/cross-small.png" alt="icon" width="20" class="icon">
+              </button>
+          </nav>
+          <div class="share-content">
+            <p id="text-outline" class="button-style outline">
+              ${noteList[id].content}
+            </p>
+            <div class="button-group">
+              <button type="button" class="button-style outline"
+                onclick="window.open('https://wa.me/?text=${encodeURIComponent((noteList[id].title ? `*${noteList[id].title}*\n\n` : '') + noteList[id].content)}', '_blank')"
+                data-title="Share via WhatsApp" aria-label="Share note on WhatsApp">
+                <img src="./app/icons/whatsapp.png" alt="icon" width="20" class="icon">
+              </button>
+              <button type="button" class="button-style outline"
+                onclick="window.location.href = 'mailto:?subject=${encodeURIComponent(noteList[id].title ? `<strong>${noteList[id].title}</strong>\n\n` : '')}&body=${encodeURIComponent(noteList[id].content)}'"
+                data-title="Share via Email" aria-label="Send note via email">
+                <img src="./app/icons/envelope.png" alt="icon" width="20" class="icon">
+              </button>
+            </div>
           </div>
         </div>`;
     this.closeModalOnClickOutside();
+  }
 
-    function resetCopyButton(id){
-      setTimeout(() => document.getElementById(id).src = "./app/icons/clone.png", 5000)
-    }
+  closeModal() {
+    let modal = document.getElementById("modal")
+    if (document.getElementById('modalContent')) document.getElementById('modalContent').remove();
+    modal.style.display = "none";
+  }
 
-    const pixKeyButton = modal.querySelector("button[data-title='Copy this key']");
-    pixKeyButton.addEventListener("click", () => {
-      const pixKey = document.getElementById("pixKey").textContent;
-      navigator.clipboard.writeText(pixKey).then(() => {
-        document.getElementById("copy-pix").src = "./app/icons/check.png";
-        resetCopyButton("copy-pix")
-      }).catch(err => {
-        console.error("Failed to copy: ", err);
-      });
+  closeModalOnClickOutside() {
+    let modal = document.getElementById("modal")
+    modal.addEventListener("click", (event) => {
+      if (!event.target.closest('#modalContent')) {
+        this.closeModal();
+      }
     });
+  }
 
-    const bitcoinKeyButton = modal.querySelector("button[data-title='Copy this address']");
-    bitcoinKeyButton.addEventListener("click", () => {
-      const bitcoinKey = document.getElementById("bitcoinKey").textContent;
-      navigator.clipboard.writeText(bitcoinKey).then(() => {
-        document.getElementById("copy-address").src = "./app/icons/check.png"
-        resetCopyButton("copy-address")
-      }).catch(err => {
-        console.error("Failed to copy: ", err);
-      });
-    });
+  cancelDialog() {
+    this.titleNote.value = "";
+    this.noteContent.value = "";
+    this.dialogControl(false);
   }
 }
 
