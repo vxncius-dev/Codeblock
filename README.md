@@ -15,7 +15,6 @@ You can try out the live demo of the project [here](https://vxncius-dev.github.i
 - **Copy Functionality**: Notes can be copied to the clipboard with the click of a button.
 - **Placeholder Notes**: If no notes exist, random placeholder content is displayed as a guide.
 - **Light and Dark Theme Toggle**: The app allows users to toggle between light and dark themes, with the theme preference saved.
-- **Donation Modal**: Users can donate via Pix or Bitcoin, with the option to copy the donation keys directly from the donation modal.
 
 ## Technologies
 
