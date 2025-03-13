@@ -7,11 +7,6 @@
   --icon-theme-outline: invert(0);
 }
 
-html {
-  background-color: white;
-  color: black;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --button-bg: #fff;
@@ -20,11 +15,6 @@ html {
     --button-child: #000;
     --icon-theme: invert(0);
     --icon-theme-outline: invert(1);
-  }
-
-  html {
-    background-color: black;
-    color: white;
   }
 }
 
@@ -75,6 +65,8 @@ body {
   margin-inline: auto;
   padding-inline: 40px;
   height: 100vh;
+  background: var(--button-child);
+  color: var(--button-bg);
 
   button,
   a,
