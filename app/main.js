@@ -1,5 +1,9 @@
+import TranscribeAPI from './transcribeAPI.js';
+
 class CodeblockAPP {
   constructor() {
+    this.transcription = new TranscribeAPI();
+    this.isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     this.container = document.getElementById("container");
     this.listView = document.getElementById("listView");
     this.newCard = document.getElementById("newCard");
@@ -18,14 +22,23 @@ class CodeblockAPP {
   }
 
   init() {
-    document.addEventListener('DOMContentLoaded', this.applySavedTheme);
+    document.addEventListener('DOMContentLoaded', () => this.applySavedTheme());
     this.loadCards();
     this.addEventListeners();
+  }
+
+  changeStatusBarColor(isLightTheme) {
+    document.querySelector('meta[name="theme-color"]')
+      .setAttribute('content', isLightTheme ? '#eeeeee' : '#000000');
+    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+      .setAttribute('content', isLightTheme ? 'background-color:#eeeeee' : 'background-color:#121212');
   }
 
   applySavedTheme() {
     const savedTheme = localStorage.getItem('Codeblock-theme');
     document.body.classList.toggle('light-mode', savedTheme === 'light');
+    const theme = document.body.classList.contains('light-mode');
+    this.changeStatusBarColor(theme)
   }
 
   loadCards() {
@@ -38,7 +51,7 @@ class CodeblockAPP {
 
     sortedNotes.forEach(([id, noteItem]) => {
       const noteTitle = noteItem.title
-        ? `<p contentEditable spellcheck="false">${noteItem.title}</p>`
+        ? `<input type="text" spellcheck="false" value="${noteItem.title}" maxlength="40">`
         : "";
 
       this.listView.innerHTML += `
@@ -114,11 +127,8 @@ class CodeblockAPP {
 
   addEventListeners() {
     let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    this.saveNewNote.addEventListener("click", () => this.addNote());
-    this.noteContent.addEventListener("input", (e) =>
-      this.managerSaveButtonStatus(e.target)
-    );
-
+    this.saveNewNote.addEventListener("click", () => { this.transcription.resetRecordButton(); this.addNote(); });
+    this.noteContent.addEventListener("input", (e) => this.managerSaveButtonStatus(e.target));
     document
       .querySelectorAll(".menu-list li")
       .forEach(option => {
@@ -126,7 +136,6 @@ class CodeblockAPP {
           this.menu.checked = false;
         })
       })
-
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".menu-list") &&
         !event.target.closest(".menu") &&
@@ -135,67 +144,88 @@ class CodeblockAPP {
         this.menu.checked = false;
       }
     });
-
     document
-      .querySelectorAll("#listView li p[contenteditable], #listView li textarea")
+      .querySelectorAll("#listView li input, #listView li textarea")
       .forEach((editableElement) => {
+        editableElement.addEventListener("focus", (e) => {
+          e.preventDefault();
+          if (document.getElementById("menu")) document.getElementById("menu").remove()
+        });
+        editableElement.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (document.getElementById("menu")) document.getElementById("menu").remove()
+        });
         editableElement.addEventListener("keyup", (e) => {
           const id = e.target.closest("li").id;
-          if (e.target.tagName === "P") {
-            noteList[id].title = e.target.innerText.trim();
-          } else if (e.target.tagName === "textarea") {
+          if (e.target.tagName == "INPUT") {
+            noteList[id].title = e.target.value.trim();
+          } else if (e.target.tagName == "TEXTAREA") {
             noteList[id].content = e.target.value;
           }
-          this.saveNotes();
+          localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+          this.buttonReset()
         });
       });
-
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
+        this.menu.checked = false;
         const elements = ["#modal", "#menu", "#dialog"];
         elements.forEach(selector => {
           const el = document.querySelector(selector);
           if (el && getComputedStyle(el).display === "flex") {
             el.style.display = "none";
+            const modalContent = document.getElementById('modalContent');
             document.getElementById("container").style.display = "flex";
-            if (document.getElementById('modalContent')) document.getElementById('modalContent').remove();
-            this.cancelDialog()
+            if (modalContent) modalContent.remove();
+            this.cancelDialog();
           }
         });
       }
     });
-
     this.newCard.addEventListener("click", () => this.dialogControl(true));
-    this.closeDialog.addEventListener("click", () => this.dialogControl(false));
+    this.closeDialog.addEventListener("click", () => {
+      this.dialogControl(false);
+      this.cancelDialog();
+    });
     this.changeTheme.addEventListener("click", () => this.toggleTheme());
     this.clearAll.addEventListener("click", () => this.clearAllNotes());
     this.importData.addEventListener("click", () => this.importDataModal());
     this.exportData.addEventListener("click", () => this.exportDataModal());
     this.donate.addEventListener("click", () => this.donateModal());
-
-    document.addEventListener('paste', (event) => {
-      const pastedContent = event.clipboardData.getData('Text');
-      let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-      const newNote = {
-        title: "",
-        content: pastedContent,
-        timestamp: Date.now()
-      };
-      const noteId = this.generateUUID();
-      noteList[noteId] = newNote;
-      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-      this.loadCards();
+    document.addEventListener('paste', (e) => {
+      if (this.dialog.style.display == "none" &&
+        !document.activeElement.closest('input, textarea, [contenteditable], select')) {
+        const pastedContent = e.clipboardData.getData('Text');
+        let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+        const newNote = {
+          title: "",
+          content: pastedContent,
+          timestamp: Date.now()
+        };
+        const noteId = this.generateUUID();
+        noteList[noteId] = newNote;
+        localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+        this.loadCards();
+      }
     });
-
-    document.addEventListener("contextmenu", (event) => event.preventDefault());
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "F12" || (event.ctrlKey && event.shiftKey && event.key === "I")) event.preventDefault();
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) e.preventDefault();
     });
+    if (this.isMobile) {
+      document.body.classList.add('mobile');
+      visualViewport.addEventListener('resize', (e) => {
+        let keyboardChange = e.target.height
+        this.dialog.style.height = keyboardChange < window.innerHeight ? "60vh" : "94vh";
+      });
+    }
   }
 
   toggleTheme() {
     document.body.classList.toggle('light-mode');
-    localStorage.setItem('Codeblock-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    const theme = document.body.classList.contains('light-mode');
+    this.changeStatusBarColor(theme)
+    localStorage.setItem('Codeblock-theme', theme ? 'light' : 'dark');
   }
 
   clearAllNotes() {
@@ -242,7 +272,7 @@ class CodeblockAPP {
     this.exportData.disabled = Object.entries(noteList).length < 1;
   }
 
-  fileUploadListener(event) {
+  fileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -336,7 +366,7 @@ class CodeblockAPP {
           <h2>Upload file</h2>
           </nav>
           <div class="upload-area">
-            <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" onchange="Codeblock.fileUploadListener(event)" hidden>
+            <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" hidden>
             <label for="upload-notes" class="button-style outline upload-button">
               <p>Upload File</p>
               <img src="./app/icons/file-upload.png" alt="icon" width="20" class="icon">
@@ -352,6 +382,7 @@ class CodeblockAPP {
           <p id="message" class="button-style outline"></p>
         </div>`;
     this.closeModalOnClickOutside();
+    document.getElementById("upload-notes").addEventListener("change", (e) => this.fileUpload(e));
     document.getElementById("cancelButton").addEventListener("click", this.closeModal);
   }
 
@@ -403,7 +434,7 @@ class CodeblockAPP {
               </span>
             </div>
             <div class="method">
-              <p>If you prefer to donate via Bitcoin, use the address below or the QR Code:</p>
+              <p>If you prefer to donate via Bitcoin, use the address below:</p>
               <span class="copyText button-style outline">
                 <a href="bitcoin:BC1Q6ZVD3EL7G00L0Q2UMY49DG93KQW8UL24R86KH6" id="bitcoinKey">
                     BC1Q6ZVD3EL7G00L0Q2UMY49DG93KQW8UL24R86KH6
@@ -482,12 +513,6 @@ class CodeblockAPP {
     this.loadCards();
   }
 
-  saveNotes() {
-    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-    this.buttonReset()
-  }
-
   copyButtonListener() {
     let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
     document.querySelectorAll("#listView li button").forEach((btn) => {
@@ -514,7 +539,7 @@ class CodeblockAPP {
     document.querySelectorAll("li").forEach((liElement) => {
       liElement.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        const existingMenu = document.querySelector("#menu");
+        const existingMenu = document.getElementById("menu");
         if (existingMenu) existingMenu.remove();
         const menu = document.createElement("div");
         menu.id = "menu";
@@ -530,7 +555,6 @@ class CodeblockAPP {
             <img src="./app/icons/share.png" alt="icon" width="20" class="icon invert">
           </button>
         `;
-
         liElement.appendChild(menu);
         const menuWidth = menu.offsetWidth;
         const menuHeight = menu.offsetHeight;
@@ -539,25 +563,19 @@ class CodeblockAPP {
         if (menuX + menuWidth > window.innerWidth) menuX = e.pageX - menuWidth;
         if (menuY + menuHeight > window.innerHeight) menuY = e.pageY - menuHeight;
         if (e.pageX > window.innerWidth * 0.8) menuX = e.pageX - menuWidth;
-
         menu.style.cssText = `
           left: ${menuX}px;
           top: ${menuY}px;
           position: absolute;
           display: flex;
           flex-direction: column;
-          width: 120px;
-        `;
-
+          width: 120px;`;
         document.addEventListener("click", (closeMenuEvent) => {
           if (
             !menu.contains(closeMenuEvent.target) &&
             !liElement.contains(closeMenuEvent.target)
-          ) {
-            menu.remove();
-          }
+          ) menu.remove();
         });
-
         menu.querySelector("#Delete").addEventListener("click", () => {
           const id = liElement.id;
           this.deleteNote(id);
@@ -603,19 +621,16 @@ class CodeblockAPP {
     modal.innerHTML += `
         <div id="modalContent">
           <nav>
-            <h2>Share note</h2>
-            <button type="button" class="button-style outline"
-              onclick="document.getElementById('modalContent').remove();
-                document.getElementById('modal').style.display='none';"
-              data-title="Close sharing menu" aria-label="Close share dialog">
-                <img src="./app/icons/cross-small.png" alt="icon" width="20" class="icon">
-              </button>
+            <span>
+              <h2>Share note</h2>
+              <p id="share-note-title">${noteList[id]?.title}</p>
+            </span>
           </nav>
           <div class="share-content">
-            <p id="text-outline" class="button-style outline">
-              ${noteList[id].content}
-            </p>
-            <div class="button-group">
+            <div class="share-itens">
+              <p id="text-outline" class="button-style outline">
+                ${noteList[id].content}
+              </p>
               <button type="button" class="button-style outline"
                 onclick="window.open('https://wa.me/?text=${encodeURIComponent((noteList[id].title ? `*${noteList[id].title}*\n\n` : '') + noteList[id].content)}', '_blank')"
                 data-title="Share via WhatsApp" aria-label="Share note on WhatsApp">
@@ -625,6 +640,14 @@ class CodeblockAPP {
                 onclick="window.location.href = 'mailto:?subject=${encodeURIComponent(noteList[id].title ? `<strong>${noteList[id].title}</strong>\n\n` : '')}&body=${encodeURIComponent(noteList[id].content)}'"
                 data-title="Share via Email" aria-label="Send note via email">
                 <img src="./app/icons/envelope.png" alt="icon" width="20" class="icon">
+              </button>
+            </div>
+            <div class="button-group end">
+              <button type="button" class="button-style outline"
+                onclick="document.getElementById('modalContent').remove();
+                document.getElementById('modal').style.display='none';"
+                data-title="Close sharing menu" aria-label="Close share dialog">
+                  <p>Close<p>
               </button>
             </div>
           </div>
@@ -651,6 +674,7 @@ class CodeblockAPP {
     this.titleNote.value = "";
     this.noteContent.value = "";
     this.dialogControl(false);
+    this.transcription.resetRecordButton();
   }
 }
 
