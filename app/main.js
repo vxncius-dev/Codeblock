@@ -1,4 +1,4 @@
-class NoteIO {
+class CodeblockAPP {
   constructor() {
     this.container = document.getElementById("container");
     this.listView = document.getElementById("listView");
@@ -127,12 +127,14 @@ class NoteIO {
         })
       })
 
-    // document.addEventListener("click", (event) => {
-    //   if (!event.target.closest(".menu-list") || !event.target.closest(".menu")) {
-    //     event.stopPropagation();
-    //     this.menu.checked = false;
-    //   }
-    // });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".menu-list") &&
+        !event.target.closest(".menu") &&
+        !event.target.closest("#menu-options")) {
+        event.stopPropagation();
+        this.menu.checked = false;
+      }
+    });
 
     document
       .querySelectorAll("#listView li p[contenteditable], #listView li textarea")
@@ -148,7 +150,7 @@ class NoteIO {
         });
       });
 
-    document.addEventListener("keydown", function (e) {
+    document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         const elements = ["#modal", "#menu", "#dialog"];
         elements.forEach(selector => {
@@ -157,7 +159,7 @@ class NoteIO {
             el.style.display = "none";
             document.getElementById("container").style.display = "flex";
             if (document.getElementById('modalContent')) document.getElementById('modalContent').remove();
-            cancelDialog()
+            this.cancelDialog()
           }
         });
       }
@@ -183,6 +185,11 @@ class NoteIO {
       noteList[noteId] = newNote;
       localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
       this.loadCards();
+    });
+
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "F12" || (event.ctrlKey && event.shiftKey && event.key === "I")) event.preventDefault();
     });
   }
 
@@ -235,6 +242,92 @@ class NoteIO {
     this.exportData.disabled = Object.entries(noteList).length < 1;
   }
 
+  fileUploadListener(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      if (file.name.endsWith(".json")) {
+        this.processJson(content);
+      } else if (file.name.endsWith(".csv")) {
+        this.processCsv(content);
+      } else {
+        this.setMessage("Formato não suportado");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  processJson(content) {
+    try {
+      const data = JSON.parse(content);
+      if (!this.isValidJsonFormat(data)) {
+        this.setMessage("O JSON não está no formato esperado");
+        return;
+      }
+      this.saveToLocalStorage(data);
+    } catch (error) {
+      this.setMessage("Erro ao analisar o JSON");
+    }
+  }
+
+  processCsv(content) {
+    const lines = content.split("\n").map(line => line.trim()).filter(line => line);
+    if (lines.length < 2) {
+      this.setMessage("CSV inválido: Não há dados suficientes");
+      return;
+    }
+    const headers = lines[0].split(",");
+    if (!headers.includes("id") || !headers.includes("title") || !headers.includes("content") || !headers.includes("timestamp")) {
+      this.setMessage("CSV não tem as colunas esperadas");
+      return;
+    }
+    const data = {};
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(",");
+      if (values.length !== headers.length) continue;
+      const entry = {
+        title: values[headers.indexOf("title")],
+        content: values[headers.indexOf("content")],
+        timestamp: Number(values[headers.indexOf("timestamp")])
+      };
+      if (isNaN(entry.timestamp)) continue;
+      data[values[headers.indexOf("id")]] = entry;
+    }
+
+    if (!this.isValidJsonFormat(data)) {
+      this.setMessage("O CSV convertido não está no formato esperado");
+      return;
+    }
+    this.saveToLocalStorage(data);
+  }
+
+  saveToLocalStorage(newData) {
+    let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+    for (const [noteId, note] of Object.entries(newData)) {
+      const newNote = {
+        title: note.title || "",
+        content: note.content,
+        timestamp: note.timestamp || Date.now()
+      };
+      noteList[noteId] = newNote;
+    }
+    localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+    this.loadCards();
+    this.closeModal();
+  }
+
+  isValidJsonFormat(data) {
+    if (typeof data !== "object" || data === null) return false;
+    return Object.values(data).every(entry =>
+      typeof entry === "object" &&
+      entry !== null &&
+      typeof entry.content === "string" &&
+      typeof entry.timestamp === "number"
+    );
+  }
+
   importDataModal() {
     modal.style.display = "flex";
     modal.innerHTML += `
@@ -243,8 +336,8 @@ class NoteIO {
           <h2>Upload file</h2>
           </nav>
           <div class="upload-area">
-            <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" hidden>
-            <label for="upload-notes" class="button-style upload-button">
+            <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" onchange="Codeblock.fileUploadListener(event)" hidden>
+            <label for="upload-notes" class="button-style outline upload-button">
               <p>Upload File</p>
               <img src="./app/icons/file-upload.png" alt="icon" width="20" class="icon">
             </label>
@@ -256,111 +349,10 @@ class NoteIO {
               <p>Close</p>
             </button>
           </div>
+          <p id="message" class="button-style outline"></p>
         </div>`;
-
     this.closeModalOnClickOutside();
     document.getElementById("cancelButton").addEventListener("click", this.closeModal);
-
-    document.getElementById("upload-notes").addEventListener("change", function (event) {
-      const file = event.target.files[0];
-      if (!file) {
-        console.log("Nenhum arquivo selecionado.");
-        return;
-      }
-      console.log("Nome do arquivo:", file.name);
-      console.log("Tipo do arquivo:", file.type || "Desconhecido");
-      console.log("Tamanho (bytes):", file.size);
-      console.log("Data de criação/modificação:", new Date(file.lastModified));
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const content = e.target.result;
-        if (file.name.endsWith(".json")) {
-          processJson(content);
-        } else if (file.name.endsWith(".csv")) {
-          processCsv(content);
-        } else {
-          console.error("Formato não suportado.");
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    function processJson(content) {
-      try {
-        const data = JSON.parse(content);
-        if (!isValidJsonFormat(data)) {
-          console.error("O JSON não está no formato esperado:", data);
-          return;
-        }
-        console.log("JSON válido:", data);
-        saveToLocalStorage(data);
-      } catch (error) {
-        console.error("Erro ao analisar o JSON:", error.message);
-      }
-    }
-
-    function processCsv(content) {
-      const lines = content.split("\n").map(line => line.trim()).filter(line => line);
-      if (lines.length < 2) {
-        console.error("CSV inválido: Não há dados suficientes.");
-        return;
-      }
-      const headers = lines[0].split(",");
-      if (!headers.includes("id") || !headers.includes("title") || !headers.includes("content") || !headers.includes("timestamp")) {
-        console.error("CSV não tem as colunas esperadas:", headers);
-        return;
-      }
-      const data = {};
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",");
-        if (values.length !== headers.length) {
-          console.warn("Linha ignorada (número de colunas inconsistente):", lines[i]);
-          continue;
-        }
-        const entry = {
-          title: values[headers.indexOf("title")],
-          content: values[headers.indexOf("content")],
-          timestamp: Number(values[headers.indexOf("timestamp")])
-        };
-        if (isNaN(entry.timestamp)) {
-          console.warn("Linha ignorada (timestamp inválido):", lines[i]);
-          continue;
-        }
-        data[values[headers.indexOf("id")]] = entry;
-      }
-
-      if (!isValidJsonFormat(data)) {
-        console.error("O CSV convertido não está no formato esperado:", data);
-        return;
-      }
-      console.log("CSV convertido para JSON:", data);
-      saveToLocalStorage(data);
-    }
-
-    function saveToLocalStorage(newData) {
-      let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-      for (const [noteId, note] of Object.entries(newData)) {
-        const newNote = {
-          title: note.title || "",
-          content: note.content,
-          timestamp: note.timestamp || Date.now()
-        };
-        noteList[noteId] = newNote;
-      }
-      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-      console.log("Notas salvas no localStorage:", noteList);
-      // close modal end update list () => this.loadCards();
-    }
-
-    function isValidJsonFormat(data) {
-      if (typeof data !== "object" || data === null) return false;
-      return Object.values(data).every(entry =>
-        typeof entry === "object" &&
-        entry !== null &&
-        typeof entry.content === "string" &&
-        typeof entry.timestamp === "number"
-      );
-    }
   }
 
   exportDataModal() {
@@ -371,6 +363,21 @@ class NoteIO {
     link.href = URL.createObjectURL(blob);
     link.download = "Codeblock-notes.json";
     link.click();
+  }
+
+  setMessage(text) {
+    let msg = document.getElementById("message");
+    if (msg) {
+      msg.textContent = text;
+      msg.style.bottom = "150px";
+      setTimeout(() => {
+        if (msg) {
+          msg.style.transition = ".6s ease";
+          msg.style.bottom = "-100%";
+          msg.textContent = "";
+        }
+      }, 2000)
+    }
   }
 
   donateModal() {
@@ -409,15 +416,13 @@ class NoteIO {
             </div>
           </div>
           <small><em>Any amount is welcome! Thank you so much for your support.</em></small>
-          
           <div class="button-group end">
             <button type="button" class="button-style outline" id="cancelButton"
               data-title="Close Modal" aria-label="Close the modal">
               <p>Close</p>
             </button>
           </div>
-
-          <p id="message" class="button-style outline">Copied to clipboard</p>
+          <p id="message" class="button-style outline"></p>
         </div>`;
 
     this.closeModalOnClickOutside();
@@ -426,29 +431,20 @@ class NoteIO {
     const resetCopyButton = (id) => setTimeout(() => {
       if (document.getElementById(id)) document.getElementById(id).src = "./app/icons/clone.png"
     }, 5000)
-    const hiddenMessage = () => setTimeout(() => {
-      let msg = document.getElementById("message");
-      if (msg) {
-        msg.style.transition = ".6s ease";
-        msg.style.bottom = "-100%";
-      }
-    }, 2000)
     document.getElementById("copyKeyBtn").addEventListener("click", () => {
       const pixKey = document.getElementById("pixKey").textContent;
       navigator.clipboard.writeText(pixKey).then(() => {
         document.getElementById("copy-pix").src = "./app/icons/check.png";
-        document.getElementById("message").style.bottom = "150px";
+        this.setMessage("Key copied to clipboard")
         resetCopyButton("copy-pix");
-        hiddenMessage();
       }).catch(err => console.error("Failed to copy: ", err));
     });
     document.getElementById("copyAddressBtn").addEventListener("click", () => {
       const bitcoinKey = document.getElementById("bitcoinKey").textContent;
       navigator.clipboard.writeText(bitcoinKey).then(() => {
         document.getElementById("copy-address").src = "./app/icons/check.png";
-        document.getElementById("message").style.bottom = "150px";
+        this.setMessage("Address copied to clipboard");
         resetCopyButton("copy-address");
-        hiddenMessage();
       }).catch(err => console.error("Failed to copy: ", err));
     });
   }
@@ -658,4 +654,4 @@ class NoteIO {
   }
 }
 
-const noteManager = new NoteIO();
+const Codeblock = new CodeblockAPP();

@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./app/style.css">
   <link rel="shortcut icon" href="./app/favicon.png" type="image/x-icon">
   <title>Codeblock</title>
-  <script src="./app/main.js" defer></script>
+  <script type="text/javascript" src="./app/main.js" defer></script>
 </head>
 
 <body>
@@ -19,11 +19,9 @@
       </div>
       <div class="button-group">
         <input type="checkbox" name="options-list" id="menu-options" hidden>
-
         <label for="menu-options" class="button-style outline menu" data-title="Menu" aria-label="Open menu options">
           <img draggable="false" src="./app/icons/menu-burger.png" alt="icon" width="20" class="icon">
         </label>
-
         <ul class="menu-list" aria-label="Menu of options">
           <li>
             <button type="button" id="changeTheme" class="button-style outline" data-title="Change Theme"
@@ -68,7 +66,6 @@
             </a>
           </li>
         </ul>
-
         <button type="button" id="newCard" class="button-style" data-title="New Note" aria-label="Create new note">
           <img draggable="false" src="./app/icons/pen-nib.png" alt="icon" width="20" class="icon invert">
         </button>
