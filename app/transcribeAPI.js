@@ -50,14 +50,12 @@ class TranscribeAPI {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       if (stream) {
-        this.recordButton.disabled = false;
         this.startRecognition();
       } else {
         this.updateUI('Permissão negada para usar o microfone.');
       }
     } catch (error) {
       this.handleError(error);
-      this.recordButton.disabled = true;
     }
   }
 
