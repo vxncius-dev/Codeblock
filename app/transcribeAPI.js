@@ -14,6 +14,7 @@ class TranscribeAPI {
     this.recognition.addEventListener('result', (e) => this.handleResult(e));
     this.recognition.addEventListener('end', () => this.handleRecognitionEnd());
     this.recognition.addEventListener('error', (event) => this.handleRecognitionError(event));
+    this.stopTime = 5000;
     this.debugMode = true;
   }
 
@@ -43,17 +44,16 @@ class TranscribeAPI {
 
       if (audioDevices.length === 0) {
         this.updateUI('Nenhum dispositivo de gravação encontrado.');
-        this.recordButton.disabled = true;
         return;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       if (stream) {
+        this.recordButton.disabled = false;
         this.startRecognition();
       } else {
         this.updateUI('Permissão negada para usar o microfone.');
-        this.recordButton.disabled = true;
       }
     } catch (error) {
       this.handleError(error);
@@ -71,7 +71,7 @@ class TranscribeAPI {
       this.isRecognizing = true;
       this.silenceTimeout = setTimeout(() => {
         this.resetRecordButton();
-      }, 10000);
+      }, this.stopTime);
     } catch (error) {
       this.handleError(error);
       this.resetRecordButton();
@@ -94,7 +94,7 @@ class TranscribeAPI {
     this.saveNewNote.disabled = false;
     this.silenceTimeout = setTimeout(() => {
       this.resetRecordButton();
-    }, 10000);
+    }, this.stopTime);
   }
 
   handleRecognitionEnd() {
@@ -108,15 +108,19 @@ class TranscribeAPI {
 
   handleError(error) {
     this.resetRecordButton();
+    let errorMessage = 'Erro no reconhecimento';
+  
     if (error === 'not-allowed') {
-      this.updateUI('Permissão de gravação negada.');
+      errorMessage = 'Permissão de gravação negada.';
     } else if (error === 'Requested device not found') {
-      this.updateUI('Nenhum dispositivo de gravação encontrado.');
+      errorMessage = 'Nenhum dispositivo de gravação encontrado.';
     } else {
-      this.updateUI(`Erro desconhecido: ${error}`);
+      errorMessage = `Erro desconhecido: ${error}`;
     }
-    this.updateUI('Erro no reconhecimento');
+  
+    this.updateUI(errorMessage);
   }
+
 
   updateUI(status) {
     if (this.debugMode) console.log(status);
