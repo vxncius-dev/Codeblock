@@ -14,7 +14,7 @@ class TranscribeAPI {
     this.recognition.addEventListener('result', (e) => this.handleResult(e));
     this.recognition.addEventListener('end', () => this.handleRecognitionEnd());
     this.recognition.addEventListener('error', (event) => this.handleRecognitionError(event));
-    this.debugMode = false;
+    this.debugMode = true;
   }
 
   resetRecordButton() {
@@ -43,7 +43,7 @@ class TranscribeAPI {
 
       if (audioDevices.length === 0) {
         this.updateUI('Nenhum dispositivo de gravação encontrado.');
-        this.resetRecordButton();
+        this.recordButton.disabled = true;
         return;
       }
 
@@ -53,11 +53,11 @@ class TranscribeAPI {
         this.startRecognition();
       } else {
         this.updateUI('Permissão negada para usar o microfone.');
-        this.resetRecordButton();
+        this.recordButton.disabled = true;
       }
     } catch (error) {
       this.handleError(error);
-      this.resetRecordButton();
+      this.recordButton.disabled = true;
     }
   }
 
