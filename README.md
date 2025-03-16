@@ -3,7 +3,7 @@
 **Codeblock** is a simple and intuitive web-based note-taking app that allows users to create, edit, and save their notes directly in the browser. It uses **localStorage** to persist notes across sessions, ensuring that all changes are saved automatically.  
 
 ---  
-<img src="https://github.com/user-attachments/assets/7efb1de4-59a0-40a6-a7d5-8852c4ce9a12" width="700">
+![Codeblock Thumbnail](https://github.com/user-attachments/assets/7efb1de4-59a0-40a6-a7d5-8852c4ce9a12)
 
 You can try out the live demo of the project [here](https://vxncius-dev.github.io/Codeblock/).  
 
