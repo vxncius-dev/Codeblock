@@ -9,10 +9,13 @@
   <link rel="stylesheet" href="./app/style.css">
   <link rel="shortcut icon" href="./app/favicon.png" type="image/x-icon">
   <title>Codeblock</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="./app/main.js" type="module" defer></script>
 </head>
 
 <body>
+  <div id="login-card"></div>
+
   <div id="container" class="column-content">
     <nav>
       <div id="logo">
@@ -20,6 +23,9 @@
         <h1>Codeblock</h1>
       </div>
       <div class="button-group">
+        <button type="button" id="login-button" class="button-style outline" data-title="Log in" aria-label="Log in">
+          <img draggable="false" src="./app/icons/google.png" alt="icon" width="20" class="icon">
+        </button>
         <input type="checkbox" name="options-list" id="menu-options" hidden>
         <label for="menu-options" class="button-style outline menu" data-title="Menu" aria-label="Open menu options">
           <img draggable="false" src="./app/icons/menu-burger.png" alt="icon" width="20" class="icon">

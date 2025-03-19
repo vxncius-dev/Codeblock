@@ -2,9 +2,12 @@ import TranscribeAPI from './transcribeAPI.js';
 
 class CodeblockAPP {
   constructor() {
+    this.debugMode = true;
     this.transcription = new TranscribeAPI();
     this.isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     this.container = document.getElementById("container");
+    this.loginCard = document.getElementById("login-card");
+    this.loginButton = document.getElementById("login-button");
     this.listView = document.getElementById("listView");
     this.newCard = document.getElementById("newCard");
     this.titleNote = document.getElementById("titleNote");
@@ -19,12 +22,18 @@ class CodeblockAPP {
     this.exportData = document.getElementById("exportData");
     this.donate = document.getElementById("donate");
     this.init();
+
+    const savedUser = localStorage.getItem("Codeblock-profile");
+    if (savedUser) {
+      console.log("Usuário já logado:", JSON.parse(savedUser));
+    }
   }
 
   init() {
     document.addEventListener('DOMContentLoaded', () => this.applySavedTheme());
     this.loadCards();
     this.addEventListeners();
+    this.initGoogleSignIn();
   }
 
   changeStatusBarColor(isLightTheme) {
@@ -209,9 +218,11 @@ class CodeblockAPP {
       }
     });
     document.addEventListener("contextmenu", (e) => e.preventDefault());
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) e.preventDefault();
-    });
+    if (!this.debugMode) {
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) e.preventDefault();
+      });
+    }
     if (this.isMobile) {
       document.body.classList.add('mobile');
       visualViewport.addEventListener('resize', (e) => {
@@ -219,6 +230,7 @@ class CodeblockAPP {
         this.dialog.style.height = keyboardChange < window.innerHeight ? "60vh" : "94vh";
       });
     }
+    this.loginButton.addEventListener('click', ()=> this.login());
   }
 
   toggleTheme() {
@@ -675,6 +687,51 @@ class CodeblockAPP {
     this.noteContent.value = "";
     this.dialogControl(false);
     this.transcription.resetRecordButton();
+  }
+
+  initGoogleSignIn() {
+    window.onGoogleLibraryLoad = () => {
+      google.accounts.id.initialize({
+        client_id: "7548924331-410ptsbiq128r56dsr95ll7chsie0g7c.apps.googleusercontent.com",
+        callback: this.handleCredentialResponse.bind(this),
+        cancel_on_tap_outside: true,
+        prompt_parent_id: "login-card"
+      });
+    };
+  }
+
+  handleCredentialResponse(response) {
+    const userData = this.decodeJWT(response.credential);
+    console.log("Dados do usuário:", userData);
+    localStorage.setItem("Codeblock-profile", JSON.stringify(userData));
+    this.updateButtonToLogout();
+    this.loginCard.style.display = "none";
+  }
+
+  decodeJWT(token) {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(base64));
+  }
+
+  login() {
+    const savedUser = localStorage.getItem("Codeblock-profile");
+    if (savedUser) {
+      localStorage.removeItem("Codeblock-profile");
+      google.accounts.id.disableAutoSelect();
+      this.loginCard.style.display = "none";
+    } else {
+      this.loginCard.style.display = "flex";
+      google.accounts.id.prompt((notification) => {
+        if (
+          notification.isNotDisplayed() ||
+          notification.isSkippedMoment() ||
+          notification.isDismissedMoment()
+        ) {
+          this.loginCard.style.display = "none";
+        }
+      });
+    }
   }
 }
 
