@@ -194,8 +194,6 @@ class CodeblockAPP {
         this.dialog.style.height = keyboardChange < window.innerHeight ? "60vh" : "94vh";
       });
     }
-    
-    this.loginButton.addEventListener('click', ()=> this.login());
   }
 
   escapeFunction(e){
@@ -378,7 +376,7 @@ class CodeblockAPP {
           </nav>
           <div class="upload-area">
             <input type="file" name="upload-file" id="upload-notes" accept=".csv,application/json" hidden>
-            <label for="upload-notes" class="button-style outline upload-button">
+            <label for="upload-notes" class="button-style upload-button">
               <p>Upload File</p>
               <img src="./app/icons/file-upload.png" alt="icon" width="20" class="icon">
             </label>
