@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-status-bar-style" content="background-color:#121212">
   <meta name="theme-color" content="#000000">
+
+  <meta name="robots" content="index, follow">
+  <meta name="description" content="Codeblock - Gerencie e organize seus códigos de forma eficiente.">
+  <meta name="keywords" content="code, programação, snippets, desenvolvimento">
+  <meta name="author" content="Vxncius">
+
+  <link rel="preload" href="./app/style.css" as="style">
   <link rel="stylesheet" href="./app/style.css">
+  <link rel="preload" href="./app/main.js" as="script">
   <link rel="shortcut icon" href="./app/favicon.png" type="image/x-icon">
-  <title>Codeblock</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <title>Codeblock - Organize Seu Código</title>
   <script src="./app/main.js" type="module" defer></script>
 </head>
 
@@ -22,14 +29,14 @@
         <img draggable="false" src="app/icon.png" alt="logo" width="20">
         <h1>Codeblock</h1>
       </div>
+      
       <div class="button-group">
-        <button type="button" id="login-button" class="button-style outline" data-title="Log in" aria-label="Log in">
-          <img draggable="false" src="./app/icons/google.png" alt="icon" width="20" class="icon">
-        </button>
         <input type="checkbox" name="options-list" id="menu-options" hidden>
+        
         <label for="menu-options" class="button-style outline menu" data-title="Menu" aria-label="Open menu options">
           <img draggable="false" src="./app/icons/menu-burger.png" alt="icon" width="20" class="icon">
         </label>
+        
         <ul class="menu-list" aria-label="Menu of options">
           <li>
             <button type="button" id="changeTheme" class="button-style outline" data-title="Change Theme"
@@ -79,8 +86,10 @@
         </button>
       </div>
     </nav>
+    
     <ul id="listView" aria-label="List of notes"></ul>
   </div>
+  
   <div id="dialog" class="column-content" style="display: none;">
     <div class="container-new-note">
       <div class="content-note">
@@ -89,16 +98,19 @@
         <textarea name="noteContent" id="noteContent" cols="30" rows="10" placeholder="Write something here..."
           spellcheck="false" aria-label="Note content"></textarea>
       </div>
+      
       <div class="button-group">
         <button type="button" id="closeDialog" class="button-style outline" data-title="Close Editor"
           aria-label="Close note editor">
           <p>Cancel</p>
           <img draggable="false" src="./app/icons/cross-small.png" alt="icon" width="20" class="icon invert">
         </button>
+        
         <button type="button" id="record" class="button-style outline" data-title="Start recording"
           aria-label="Start or stop audio recording">
           <img draggable="false" src="./app/icons/microphone.png" alt="icon" width="20" class="icon invert">
         </button>
+        
         <button type="button" id="saveNewNote" class="button-style" disabled data-title="Save Note"
           aria-label="Save note">
           <img draggable="false" src="./app/icons/disk.png" alt="icon" width="20" class="icon invert">
@@ -106,6 +118,7 @@
       </div>
     </div>
   </div>
+  
   <div id="modal" style="display: none;"></div>
 </body>
 
