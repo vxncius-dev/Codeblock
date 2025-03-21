@@ -2,12 +2,10 @@ import TranscribeAPI from './transcribeAPI.js';
 
 class CodeblockAPP {
   constructor() {
-    this.debugMode = true;
+    this.debugMode = false;
     this.transcription = new TranscribeAPI();
     this.isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     this.container = document.getElementById("container");
-    this.loginCard = document.getElementById("login-card");
-    this.loginButton = document.getElementById("login-button");
     this.listView = document.getElementById("listView");
     this.newCard = document.getElementById("newCard");
     this.titleNote = document.getElementById("titleNote");
@@ -22,18 +20,12 @@ class CodeblockAPP {
     this.exportData = document.getElementById("exportData");
     this.donate = document.getElementById("donate");
     this.init();
-
-    const savedUser = localStorage.getItem("Codeblock-profile");
-    if (savedUser) {
-      console.log("Usuário já logado:", JSON.parse(savedUser));
-    }
   }
 
   init() {
     document.addEventListener('DOMContentLoaded', () => this.applySavedTheme());
     this.loadCards();
     this.addEventListeners();
-    this.initGoogleSignIn();
   }
 
   changeStatusBarColor(isLightTheme) {
@@ -145,6 +137,7 @@ class CodeblockAPP {
           this.menu.checked = false;
         })
       })
+    
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".menu-list") &&
         !event.target.closest(".menu") &&
@@ -153,6 +146,7 @@ class CodeblockAPP {
         this.menu.checked = false;
       }
     });
+    
     document
       .querySelectorAll("#listView li input, #listView li textarea")
       .forEach((editableElement) => {
@@ -175,54 +169,24 @@ class CodeblockAPP {
           this.buttonReset()
         });
       });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        this.menu.checked = false;
-        const elements = ["#modal", "#menu", "#dialog"];
-        elements.forEach(selector => {
-          const el = document.querySelector(selector);
-          if (el && getComputedStyle(el).display === "flex") {
-            el.style.display = "none";
-            const modalContent = document.getElementById('modalContent');
-            document.getElementById("container").style.display = "flex";
-            if (modalContent) modalContent.remove();
-            this.cancelDialog();
-          }
-        });
-      }
-    });
+    
+    document.addEventListener("keydown", (e) => this.escapeFunction(e));
     this.newCard.addEventListener("click", () => this.dialogControl(true));
-    this.closeDialog.addEventListener("click", () => {
-      this.dialogControl(false);
-      this.cancelDialog();
-    });
+    this.closeDialog.addEventListener("click", () => { this.dialogControl(false);this.cancelDialog() });
     this.changeTheme.addEventListener("click", () => this.toggleTheme());
     this.clearAll.addEventListener("click", () => this.clearAllNotes());
     this.importData.addEventListener("click", () => this.importDataModal());
     this.exportData.addEventListener("click", () => this.exportDataModal());
     this.donate.addEventListener("click", () => this.donateModal());
-    document.addEventListener('paste', (e) => {
-      if (this.dialog.style.display == "none" &&
-        !document.activeElement.closest('input, textarea, [contenteditable], select')) {
-        const pastedContent = e.clipboardData.getData('Text');
-        let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-        const newNote = {
-          title: "",
-          content: pastedContent,
-          timestamp: Date.now()
-        };
-        const noteId = this.generateUUID();
-        noteList[noteId] = newNote;
-        localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
-        this.loadCards();
-      }
-    });
+    document.addEventListener('paste', (e) => this.pasteFunction(e));
     document.addEventListener("contextmenu", (e) => e.preventDefault());
+    
     if (!this.debugMode) {
       document.addEventListener("keydown", (e) => {
         if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) e.preventDefault();
       });
     }
+    
     if (this.isMobile) {
       document.body.classList.add('mobile');
       visualViewport.addEventListener('resize', (e) => {
@@ -230,7 +194,42 @@ class CodeblockAPP {
         this.dialog.style.height = keyboardChange < window.innerHeight ? "60vh" : "94vh";
       });
     }
+    
     this.loginButton.addEventListener('click', ()=> this.login());
+  }
+
+  escapeFunction(e){
+    if (e.key === "Escape") {
+      this.menu.checked = false;
+      const elements = ["#modal", "#menu", "#dialog"];
+      elements.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el && getComputedStyle(el).display === "flex") {
+          el.style.display = "none";
+          const modalContent = document.getElementById('modalContent');
+          document.getElementById("container").style.display = "flex";
+          if (modalContent) modalContent.remove();
+          this.cancelDialog();
+        }
+      });
+    }
+  }
+
+  pasteFunction(e){
+    if (this.dialog.style.display == "none" &&
+      !document.activeElement.closest('input, textarea, [contenteditable], select')) {
+      const pastedContent = e.clipboardData.getData('Text');
+      let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
+      const newNote = {
+        title: "",
+        content: pastedContent,
+        timestamp: Date.now()
+      };
+      const noteId = this.generateUUID();
+      noteList[noteId] = newNote;
+      localStorage.setItem("Codeblock-notes", JSON.stringify(noteList));
+      this.loadCards();
+    }
   }
 
   toggleTheme() {
@@ -687,51 +686,6 @@ class CodeblockAPP {
     this.noteContent.value = "";
     this.dialogControl(false);
     this.transcription.resetRecordButton();
-  }
-
-  initGoogleSignIn() {
-    window.onGoogleLibraryLoad = () => {
-      google.accounts.id.initialize({
-        client_id: "7548924331-410ptsbiq128r56dsr95ll7chsie0g7c.apps.googleusercontent.com",
-        callback: this.handleCredentialResponse.bind(this),
-        cancel_on_tap_outside: true,
-        prompt_parent_id: "login-card"
-      });
-    };
-  }
-
-  handleCredentialResponse(response) {
-    const userData = this.decodeJWT(response.credential);
-    console.log("Dados do usuário:", userData);
-    localStorage.setItem("Codeblock-profile", JSON.stringify(userData));
-    this.updateButtonToLogout();
-    this.loginCard.style.display = "none";
-  }
-
-  decodeJWT(token) {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64));
-  }
-
-  login() {
-    const savedUser = localStorage.getItem("Codeblock-profile");
-    if (savedUser) {
-      localStorage.removeItem("Codeblock-profile");
-      google.accounts.id.disableAutoSelect();
-      this.loginCard.style.display = "none";
-    } else {
-      this.loginCard.style.display = "flex";
-      google.accounts.id.prompt((notification) => {
-        if (
-          notification.isNotDisplayed() ||
-          notification.isSkippedMoment() ||
-          notification.isDismissedMoment()
-        ) {
-          this.loginCard.style.display = "none";
-        }
-      });
-    }
   }
 }
 
