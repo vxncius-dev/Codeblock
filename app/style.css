@@ -3,6 +3,7 @@
   src: url('./fonts/SF-Pro.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  font-display: block;
 }
 
 ::-webkit-scrollbar {
