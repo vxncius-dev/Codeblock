@@ -405,6 +405,7 @@ class CodeblockAPP {
     link.click();
   }
 
+  // mudar isso pra usar um item global para melhorar os feedbacks
   setMessage(text) {
     let msg = document.getElementById("message");
     if (msg) {
@@ -532,7 +533,9 @@ class CodeblockAPP {
           navigator.clipboard
             .writeText(contentNote)
             .then(() => {
+              // passar isso pro callback global
               alert("Texto copiado para a área de transferência!");
+              console.log(btn)
             })
             .catch((error) => {
               alert(`Falha ao copiar texto para a área de transferência: ${error}`);
