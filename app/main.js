@@ -26,6 +26,7 @@ class CodeblockAPP {
     document.addEventListener('DOMContentLoaded', () => this.applySavedTheme());
     this.loadCards();
     this.addEventListeners();
+    this.detectDevTools();
   }
 
   changeStatusBarColor(isLightTheme) {
@@ -405,7 +406,6 @@ class CodeblockAPP {
     link.click();
   }
 
-  // mudar isso pra usar um item global para melhorar os feedbacks
   setMessage(text) {
     let msg = document.getElementById("message");
     if (msg) {
@@ -417,7 +417,7 @@ class CodeblockAPP {
           msg.style.bottom = "-100%";
           msg.textContent = "";
         }
-      }, 2000)
+      }, 2000);
     }
   }
 
@@ -533,12 +533,16 @@ class CodeblockAPP {
           navigator.clipboard
             .writeText(contentNote)
             .then(() => {
-              // passar isso pro callback global
-              alert("Texto copiado para a área de transferência!");
+              // lembrar de passar os alerts pra um card informativo
+              btn.querySelector("img").src = "./app/icons/check.png";
+              setTimeout(() => {
+                  btn.querySelector("img").src = "./app/icons/clone.png";
+              }, 2000);
+              // alert("Texto copiado para a área de transferência!");
               console.log(btn)
             })
             .catch((error) => {
-              alert(`Falha ao copiar texto para a área de transferência: ${error}`);
+              console.log(`Falha ao copiar texto para a área de transferência: ${error}`);
             });
         } catch (e) {
           console.log(e);
@@ -688,6 +692,41 @@ class CodeblockAPP {
     this.dialogControl(false);
     this.transcription.resetRecordButton();
   }
+
+  detectDevTools() {
+        const threshold = 160;
+        const element = new Image();
+        
+        Object.defineProperty(element, 'id', {
+            get: () => {
+                this.devToolsOpen = true;
+                this.showAsciiArt();
+            }
+        });
+
+        const checkSize = () => {
+            this.devToolsOpen = window.outerWidth - window.innerWidth > threshold ||
+                                window.outerHeight - window.innerHeight > threshold;
+            if (this.devToolsOpen) this.showAsciiArt();
+        };
+
+        window.addEventListener('resize', checkSize);
+        console.log('%c ', element);
+    }
+
+    showAsciiArt() {
+        console.log(`
+
+_________            .___    ___.   .__                 __    
+\_   ___ \  ____   __| _/____\_ |__ |  |   ____   ____ |  | __
+/    \  \/ /  _ \ / __ |/ __ \| __ \|  |  /  _ \_/ ___\|  |/ /
+\     \___(  <_> ) /_/ \  ___/| \_\ \  |_(  <_> )  \___|    < 
+ \______  /\____/\____ |\___  >___  /____/\____/ \___  >__|_ \
+        \/            \/    \/    \/                 \/     \/
+        
+        Curioso, hein? 👀 Confira meu Github: https://github.com/vxncius-dev
+        `);
+    }
 }
 
 const Codeblock = new CodeblockAPP();
