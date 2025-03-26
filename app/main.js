@@ -715,10 +715,10 @@ class CodeblockAPP {
     }
 
     showAsciiArt() {
-        console.log('%cCodeBlock%c: Opa, curioso hein? Confira meu Github: %chttps://github.com/vxncius-dev', 
-            'font-weight: bold; font-family: "Times New Roman", serif; font-size: 16px; color: #000;', 
+        console.log('%cCodeBlock%c - Confira meu Github: %chttps://github.com/vxncius-dev', 
+            'font-weight: bold; font-family: "Times New Roman", serif; font-size: 16px;', 
             '', 
-            'color: blue; text-decoration: underline;');
+            'color: #0e46df; text-decoration: underline;');
     }
 
 }
