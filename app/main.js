@@ -539,7 +539,6 @@ class CodeblockAPP {
                   btn.querySelector("img").src = "./app/icons/clone.png";
               }, 2000);
               // alert("Texto copiado para a área de transferência!");
-              console.log(btn)
             })
             .catch((error) => {
               console.log(`Falha ao copiar texto para a área de transferência: ${error}`);
