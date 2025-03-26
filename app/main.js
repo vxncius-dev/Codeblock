@@ -704,6 +704,7 @@ class CodeblockAPP {
         });
 
         const checkSize = () => {
+            console.clear();
             this.devToolsOpen = window.outerWidth - window.innerWidth > threshold ||
                                 window.outerHeight - window.innerHeight > threshold;
             if (this.devToolsOpen) this.showAsciiArt();
@@ -714,18 +715,12 @@ class CodeblockAPP {
     }
 
     showAsciiArt() {
-        console.log(`
-
-_________            .___    ___.   .__                 __    
-\_   ___ \  ____   __| _/____\_ |__ |  |   ____   ____ |  | __
-/    \  \/ /  _ \ / __ |/ __ \| __ \|  |  /  _ \_/ ___\|  |/ /
-\     \___(  <_> ) /_/ \  ___/| \_\ \  |_(  <_> )  \___|    < 
- \______  /\____/\____ |\___  >___  /____/\____/ \___  >__|_ \
-        \/            \/    \/    \/                 \/     \/
-        
-        Curioso, hein? 👀 Confira meu Github: https://github.com/vxncius-dev
-        `);
+        console.log('%cCodeBlock%c: Opa, curioso hein? Confira meu Github: %chttps://github.com/vxncius-dev', 
+            'font-weight: bold; font-family: "Times New Roman", serif; font-size: 16px; color: #000;', 
+            '', 
+            'color: blue; text-decoration: underline;');
     }
+
 }
 
 const Codeblock = new CodeblockAPP();
