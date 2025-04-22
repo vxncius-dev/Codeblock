@@ -1,15 +1,20 @@
 class TranscribeAPI {
   constructor(options = { interimResults: true }) {
     this.isRecognizing = false;
-    window.SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.noteContent = document.getElementById('noteContent');
+    this.saveNewNote = document.getElementById("saveNewNote");
+    this.recordButton = document.getElementById("record");
+    if (!window.SpeechRecognition) {
+      this.recordButton.disabled = true;
+      this.recordButton.style.display = "none";
+      this.updateUI("SpeechRecognition não é suportado neste navegador.");
+      throw new Error("SpeechRecognition não é suportado neste navegador.");
+    }
     this.recognition = new SpeechRecognition();
     this.silenceTimeout = null;
     this.recognition.lang = navigator.language || 'en-US';
     this.recognition.interimResults = options.interimResults;
-    this.noteContent = document.getElementById('noteContent');
-    this.saveNewNote = document.getElementById("saveNewNote");
-    this.recordButton = document.getElementById("record");
     this.recordButton.addEventListener('click', () => this.toggleRecognition());
     this.recognition.addEventListener('result', (e) => this.handleResult(e));
     this.recognition.addEventListener('end', () => this.handleRecognitionEnd());
