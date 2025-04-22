@@ -3,7 +3,12 @@ import TranscribeAPI from './transcribeAPI.js';
 class CodeblockAPP {
   constructor() {
     this.debugMode = false;
-    this.transcription = new TranscribeAPI();
+    try {
+      this.transcription = new TranscribeAPI();
+    } catch (error) {
+      this.transcription = null;
+      if (this.debugMode) console.warn("Erro ao iniciar transcrição:", error.message);
+    }
     this.isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     this.container = document.getElementById("container");
     this.listView = document.getElementById("listView");
@@ -129,7 +134,10 @@ class CodeblockAPP {
 
   addEventListeners() {
     let noteList = JSON.parse(localStorage.getItem("Codeblock-notes")) || {};
-    this.saveNewNote.addEventListener("click", () => { this.transcription.resetRecordButton(); this.addNote(); });
+    this.saveNewNote.addEventListener("click", () => { 
+      if (this.transcription) this.transcription.resetRecordButton();
+      this.addNote();
+    });
     this.noteContent.addEventListener("input", (e) => this.managerSaveButtonStatus(e.target));
     document
       .querySelectorAll(".menu-list li")
@@ -689,7 +697,7 @@ class CodeblockAPP {
     this.titleNote.value = "";
     this.noteContent.value = "";
     this.dialogControl(false);
-    this.transcription.resetRecordButton();
+    if (this.transcription) this.transcription.resetRecordButton();
   }
 
   detectDevTools() {
